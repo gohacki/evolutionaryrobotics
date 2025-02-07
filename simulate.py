@@ -6,9 +6,9 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 p.setGravity(0,0,-9.8)
 planeID = p.loadURDF("plane.urdf")
-p.loadSDF("boxes.sdf")
-for i in range(10000):
+robotID = p.loadURDF("body.urdf")
+p.loadSDF("world.sdf")
+while True:
     p.stepSimulation()
     time.sleep(1/60)
-    print(i)
 p.disconnect()
