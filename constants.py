@@ -11,3 +11,5 @@ RANGESTART = 0
 RANGEEND = numpy.pi*2
 SLEEPTIME = 1/30
 MAXFORCE= 50
+
+numberOfGenerations = 10

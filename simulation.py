@@ -6,11 +6,15 @@ from world import WORLD
 import time
 
 class SIMULATION:
-    def __init__(self):
-        self.physicsClient = p.connect(p.GUI)
+    def __init__(self, directOrGUI):  # NEW: Accept mode as an argument
+        # NEW: Connect in DIRECT mode if requested, otherwise in GUI mode
+        if directOrGUI.upper() == "DIRECT":  # NEW:
+            self.physicsClient = p.connect(p.DIRECT)  # NEW:
+        else:
+            self.physicsClient = p.connect(p.GUI)  # NEW:
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-        p.setGravity(0,0,c.GRAVITY)
+        p.setGravity(0, 0, c.GRAVITY)
         self.robot = ROBOT()
         self.world = WORLD()
 
@@ -21,6 +25,9 @@ class SIMULATION:
             self.robot.Think()
             self.robot.Act(i)
             time.sleep(c.SLEEPTIME)
+
+    def Get_Fitness(self):
+        return self.robot.Get_Fitness()
+
     def __del__(self):
         p.disconnect()
-
