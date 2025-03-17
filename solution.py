@@ -1,59 +1,76 @@
-import numpy as np  # NEW:
-import os           # NEW:
-import pyrosim.pyrosim as pyrosim  # NEW:
-import random       # NEW:
+# solution.py
+import numpy as np
+import os
+import pyrosim.pyrosim as pyrosim
+import random
+import time
 
 class SOLUTION:
-    def __init__(self):
-        # Create a 3x2 matrix of random values in the range [0,1] then scale to [-1,+1]
-        self.weights = np.random.rand(3, 2)  # NEW:
-        self.weights = self.weights * 2 - 1   # NEW:
+    def __init__(self, myID):  # NEW: Accept a unique ID argument.
+        self.myID = myID  # NEW:
+        self.weights = np.random.rand(3, 2)
+        self.weights = self.weights * 2 - 1
 
-    def Evaluate(self, mode):  # NEW: Added mode argument ("DIRECT" or "GUI")
-        self.Create_World()   # NEW:
-        self.Create_Body()    # NEW:
-        self.Create_Brain()   # NEW:
-        # NEW: Pass the mode argument to simulate.py on the command line.
-        os.system("python simulate.py " + mode)  # NEW:
-        with open("fitness.txt", "r") as fitnessFile:  # NEW:
-            fitnessStr = fitnessFile.read().strip()     # NEW:
-        self.fitness = float(fitnessStr)                # NEW:
+    def Set_ID(self, newID):  # NEW: Update the solution's unique ID.
+        self.myID = newID
 
-    def Create_World(self):  # NEW:
-        length, width, height = 1, 1, 1  # NEW:
-        x, y, z = -3, 3, 0.5  # NEW:
-        pyrosim.Start_SDF("world.sdf")  # NEW:
-        pyrosim.Send_Cube(name="Box", pos=[x, y, z], size=[length, width, height])  # NEW:
-        pyrosim.End()  # NEW:
+    def Start_Simulation(self, mode):  # NEW:
+        self.Create_World()
+        self.Create_Body()
+        self.Create_Brain()
+        # Build a command string that passes mode and this solution's unique ID to simulate.py.
+        cmd = "python simulate.py " + mode + " " + str(self.myID) + " &"  # NEW:
+        # print("Command:", cmd)  # (Optional debug)
+        os.system(cmd)
 
-    def Create_Body(self):  # NEW:
-        length, width, height = 1, 1, 1  # NEW:
-        pyrosim.Start_URDF("body.urdf")  # NEW:
-        pyrosim.Send_Cube(name="Torso", pos=[0, 0, 1.5], size=[length, width, height])  # NEW:
-        pyrosim.Send_Cube(name="BackLeg", pos=[-0.5, 0, -0.5], size=[length, width, height])  # NEW:
-        pyrosim.Send_Cube(name="FrontLeg", pos=[0.5, 0, -0.5], size=[length, width, height])  # NEW:
-        pyrosim.Send_Joint(name="Torso_BackLeg", parent="Torso", child="BackLeg", type="revolute", position=[-0.5, 0, 1])  # NEW:
-        pyrosim.Send_Joint(name="Torso_FrontLeg", parent="Torso", child="FrontLeg", type="revolute", position=[0.5, 0, 1])  # NEW:
-        pyrosim.End()  # NEW:
+    def Wait_For_Simulation_To_End(self):  # NEW:
+        fitnessFileName = "fitness" + str(self.myID) + ".txt"  # NEW:
+        while not os.path.exists(fitnessFileName):
+            time.sleep(0.01)
+        with open(fitnessFileName, "r") as fitnessFile:
+            fitnessStr = fitnessFile.read().strip()
+        self.fitness = float(fitnessStr)
+        print("Solution", self.myID, "fitness:", self.fitness)  # NEW: For verification
+        os.system("rm " + fitnessFileName)  # NEW: Clean up the fitness file
 
-    def Create_Brain(self):  # NEW:
-        pyrosim.Start_NeuralNetwork("brain.nndf")  # NEW:
+    def Evaluate(self, mode):  # (Optional convenience method – not used in PHC now)
+        self.Start_Simulation(mode)
+        self.Wait_For_Simulation_To_End()
+
+    def Create_World(self):
+        length, width, height = 1, 1, 1
+        x, y, z = -3, 3, 0.5
+        pyrosim.Start_SDF("world.sdf")
+        pyrosim.Send_Cube(name="Box", pos=[x, y, z], size=[length, width, height])
+        pyrosim.End()
+
+    def Create_Body(self):
+        length, width, height = 1, 1, 1
+        pyrosim.Start_URDF("body.urdf")
+        pyrosim.Send_Cube(name="Torso", pos=[0, 0, 1.5], size=[length, width, height])
+        pyrosim.Send_Cube(name="BackLeg", pos=[-0.5, 0, -0.5], size=[length, width, height])
+        pyrosim.Send_Cube(name="FrontLeg", pos=[0.5, 0, -0.5], size=[length, width, height])
+        pyrosim.Send_Joint(name="Torso_BackLeg", parent="Torso", child="BackLeg", type="revolute", position=[-0.5, 0, 1])
+        pyrosim.Send_Joint(name="Torso_FrontLeg", parent="Torso", child="FrontLeg", type="revolute", position=[0.5, 0, 1])
+        pyrosim.End()
+
+    def Create_Brain(self):
+        brainFileName = "brain" + str(self.myID) + ".nndf"  # NEW: Use unique filename
+        pyrosim.Start_NeuralNetwork(brainFileName)
         # Sensor neurons
-        pyrosim.Send_Sensor_Neuron(name="0", linkName="Torso")  # NEW:
-        pyrosim.Send_Sensor_Neuron(name="1", linkName="BackLeg")  # NEW:
-        pyrosim.Send_Sensor_Neuron(name="2", linkName="FrontLeg")  # NEW:
+        pyrosim.Send_Sensor_Neuron(name="0", linkName="Torso")
+        pyrosim.Send_Sensor_Neuron(name="1", linkName="BackLeg")
+        pyrosim.Send_Sensor_Neuron(name="2", linkName="FrontLeg")
         # Motor neurons (names start at 3)
-        pyrosim.Send_Motor_Neuron(name="3", jointName="Torso_BackLeg")  # NEW:
-        pyrosim.Send_Motor_Neuron(name="4", jointName="Torso_FrontLeg")  # NEW:
-        # Create synapses using the current weight matrix
-        for currentRow in range(3):  # NEW:
-            for currentColumn in range(2):  # NEW:
-                weight = self.weights[currentRow][currentColumn]  # NEW:
-                # Source neuron is sensor currentRow; target neuron is motor (currentColumn + 3)
-                pyrosim.Send_Synapse(sourceNeuronName=str(currentRow), targetNeuronName=str(currentColumn + 3), weight=weight)  # NEW:
-        pyrosim.End()  # NEW:
+        pyrosim.Send_Motor_Neuron(name="3", jointName="Torso_BackLeg")
+        pyrosim.Send_Motor_Neuron(name="4", jointName="Torso_FrontLeg")
+        for currentRow in range(3):
+            for currentColumn in range(2):
+                weight = self.weights[currentRow][currentColumn]
+                pyrosim.Send_Synapse(sourceNeuronName=str(currentRow), targetNeuronName=str(currentColumn + 3), weight=weight)
+        pyrosim.End()
 
     def Mutate(self):  # NEW:
-        randomRow = random.randint(0, 2)  # NEW:
-        randomColumn = random.randint(0, 1)  # NEW:
-        self.weights[randomRow, randomColumn] = random.random() * 2 - 1  # NEW:
+        randomRow = random.randint(0, 2)
+        randomColumn = random.randint(0, 1)
+        self.weights[randomRow, randomColumn] = random.random() * 2 - 1

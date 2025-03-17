@@ -1,12 +1,17 @@
-import sys  # NEW: Import sys to access command line arguments
+# simulate.py
+import sys  # NEW: Import sys
 from simulation import SIMULATION
 
-# NEW: Get the mode from the command line (DIRECT or GUI); default to DIRECT if not provided
 if len(sys.argv) > 1:
-    directOrGUI = sys.argv[1]
+    mode = sys.argv[1]
 else:
-    directOrGUI = "DIRECT"  # NEW:
+    mode = "DIRECT"
 
-simulation = SIMULATION(directOrGUI)  # NEW: Pass mode to the simulation constructor
+if len(sys.argv) > 2:
+    solutionID = sys.argv[2]
+else:
+    solutionID = "0"  # NEW: Default ID if not provided
+
+simulation = SIMULATION(mode, solutionID)  # NEW: Pass solutionID as well
 simulation.Run()
 simulation.Get_Fitness()

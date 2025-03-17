@@ -9,7 +9,8 @@ FREQUENCY2 = 30
 PHASEOFFSET2 = numpy.pi/2
 RANGESTART = 0
 RANGEEND = numpy.pi*2
-SLEEPTIME = 1/30
+SLEEPTIME = 1/60
 MAXFORCE= 50
 
 numberOfGenerations = 10
+populationSize = 10
