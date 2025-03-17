@@ -6,9 +6,9 @@ from world import WORLD
 import time
 
 class SIMULATION:
-    def __init__(self, directOrGUI):  # NEW: Accept mode as an argument
-        # NEW: Connect in DIRECT mode if requested, otherwise in GUI mode
-        if directOrGUI.upper() == "DIRECT":  # NEW:
+    def __init__(self, directOrGUI):  # NEW:
+        self.directOrGUI = directOrGUI.upper()  # NEW: Save mode for later use
+        if self.directOrGUI == "DIRECT":  # NEW:
             self.physicsClient = p.connect(p.DIRECT)  # NEW:
         else:
             self.physicsClient = p.connect(p.GUI)  # NEW:
@@ -24,7 +24,9 @@ class SIMULATION:
             self.robot.Sense(i)
             self.robot.Think()
             self.robot.Act(i)
-            time.sleep(c.SLEEPTIME)
+            # Only pause if running in GUI mode to allow you to watch the simulation.
+            if self.directOrGUI == "GUI":  # NEW:
+                time.sleep(c.SLEEPTIME)  # NEW:
 
     def Get_Fitness(self):
         return self.robot.Get_Fitness()
