@@ -19,7 +19,7 @@ class SOLUTION:
         self.Create_Body()
         self.Create_Brain()
         # Build a command string that passes mode and this solution's unique ID to simulate.py.
-        cmd = "python simulate.py " + mode + " " + str(self.myID) + " &"  # NEW:
+        cmd = "python simulate.py " + mode + " " + str(self.myID) + " 2&>1 &"  # NEW:
         # print("Command:", cmd)  # (Optional debug)
         os.system(cmd)
 
