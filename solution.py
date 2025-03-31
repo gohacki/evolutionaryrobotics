@@ -9,8 +9,7 @@ import constants as c
 class SOLUTION:
     def __init__(self, myID):  # NEW: Accept a unique ID argument.
         self.myID = myID  # NEW:
-        self.weights = np.random.rand(c.numSensorNeurons, c.numMotorNeurons)
-        self.weights = self.weights * 2 - 1
+        self.weights = (np.random.rand(c.numSensorNeurons, c.numMotorNeurons) * 2) - 1
 
     def Set_ID(self, newID):  # NEW: Update the solution's unique ID.
         self.myID = newID

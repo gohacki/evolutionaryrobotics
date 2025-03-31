@@ -6,7 +6,7 @@ b3Printf: Selected demo: Physics Server
 startThreads creating 1 threads.
 starting thread 0
 started thread 0 
-MotionThreadFunc thread staVersion = 4.1 Metal - 89.3
+MotionThreadFunc thread sVersion = 4.1 Metal - 89.3
 Vendor = Apple
 Renderer = Apple M1
 b3Printf: Selected demo: Physics Server
@@ -17,26 +17,29 @@ MotionThreadFunc thread started
 b3Printf: b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
 
 b3Printf: expected a world element, continuing without it.
+Traceback (most recent call last):
+  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/simulate.py", line 16, in <module>
+    simulation.Run()
+  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/simulation.py", line 26, in Run
+    self.robot.Sense(i)
+  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/robot.py", line 35, in Sense
+    sensor.Get_Value(i)
+  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/sensor.py", line 11, in Get_Value
+    self.values[i] = pyrosim.Get_Touch_Sensor_Value_For_Link(self.linkName)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/pyrosim/pyrosim.py", line 53, in Get_Touch_Sensor_Value_For_Link
+    for pt in pts:
+              ^^^
+TypeError: 'NoneType' object is not iterable
+Exception ignored in: <function SIMULATION.__del__ at 0x1077b0540>
+Traceback (most recent call last):
+  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/simulation.py", line 36, in __del__
+pybullet.error: Not connected to physics server.
 numActiveThreads = 0
 stopping threads
 Thread with taskId 0 exiting
 Thread TERMINATED
 destroy semaphore
 semaphore destroyed
-destroy main semaphore
-main semaphore destroyed
- line 19, in __init__
-    self.nn = NEURAL_NETWORK(brainFile)
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mirogohacki/Desktop/evolutionaryrobotics/pyrosim/neuralNetwork.py", line 13, in __init__
-    f = open(nndfFileName,"r")
-        ^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: 'brain93.nndf'
-numActiveThreads = 0
-stopping threads
-destroy semaphore
-semaphore destroyed
-Thread with taskId 0 exiting
-Thread TERMINATED
 destroy main semaphore
 main semaphore destroyed
