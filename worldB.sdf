@@ -1,6 +1,6 @@
 <sdf>
     <model name="Box">
-        <pose>3.7363505875209775 1.066355603778879 0.5 0 0 0 </pose>
+        <pose>1.166502061243774 0.6468861618285571 0.5 0 0 0 </pose>
         <link name="Box">
             <inertial>
                 <mass>1.0</mass>

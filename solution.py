@@ -38,11 +38,28 @@ class SOLUTION:
         self.Wait_For_Simulation_To_End()
 
     def Create_World(self):
+        # Dimensions for the block
         length, width, height = 1, 1, 1
-        x, y, z = -3, 3, 0.5
-        pyrosim.Start_SDF("world.sdf")
-        pyrosim.Send_Cube(name="Box", pos=[x, y, z], size=[length, width, height])
+        z = 0.5  # fixed height for the block
+        
+        # Generate random positions for worldA
+        xA = random.uniform(-5, 5)
+        yA = random.uniform(-5, 5)
+        
+        # Generate random positions for worldB
+        xB = random.uniform(-5, 5)
+        yB = random.uniform(-5, 5)
+        
+        # Create worldA.sdf
+        pyrosim.Start_SDF("worldA.sdf")
+        pyrosim.Send_Cube(name="Box", pos=[xA, yA, z], size=[length, width, height])
         pyrosim.End()
+        
+        # Create worldB.sdf
+        pyrosim.Start_SDF("worldB.sdf")
+        pyrosim.Send_Cube(name="Box", pos=[xB, yB, z], size=[length, width, height])
+        pyrosim.End()
+
 
     def Create_Body(self):
         length, width, height = 1, 1, 1
