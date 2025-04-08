@@ -12,8 +12,8 @@ RANGEEND = numpy.pi*2
 SLEEPTIME = 1/60
 MAXFORCE= 50
 
-numberOfGenerations = 10
-populationSize = 10
+numberOfGenerations = 2
+populationSize = 2
 
 numSensorNeurons = 4
 numMotorNeurons = 8

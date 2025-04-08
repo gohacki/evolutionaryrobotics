@@ -1,86 +1,119 @@
 # parallelHillClimber.py
-import os  # NEW: For file management
-from solution import SOLUTION  # NEW:
-from constants import populationSize, numberOfGenerations  # NEW:
-import copy  # NEW:
+import os
+from solution import SOLUTION
+from constants import populationSize, numberOfGenerations
+import copy
+import time # Import time for potential delays
 
-class PARALLEL_HILL_CLIMBER:  # NEW: Renamed class
+class PARALLEL_HILL_CLIMBER:
     def __init__(self):
-        # Delete any remnant brain and fitness files at startup
-        os.system("rm brain*.nndf")  # Use "del brain*.nndf" on Windows
-        os.system("rm fitness*.txt")  # Use "del fitness*.txt" on Windows
-        self.nextAvailableID = 0  # NEW: Initialize unique ID counter
-        self.parents = {}  # NEW: Dictionary for parents
-        for i in range(populationSize):  # NEW:
-            self.parents[self.nextAvailableID] = SOLUTION(self.nextAvailableID)  # NEW: Create parent with unique ID
-            self.nextAvailableID += 1  # NEW:
-        # (Optional debug print – remove after verifying)
-        # print("Initial parents:", self.parents)
-    
+        os.system("rm brain*.nndf 2> /dev/null") # Suppress errors if no files exist
+        os.system("rm fitness*.txt 2> /dev/null")
+        os.system("rm world*.sdf 2> /dev/null") # Clean up world files too
+        self.nextAvailableID = 0
+        self.parents = {}
+        for i in range(populationSize):
+            self.parents[i] = SOLUTION(self.nextAvailableID) # Use 'i' as the key directly
+            self.nextAvailableID += 1
+        print("Initialized Parallel Hill Climber with population size:", populationSize)
+
     def Evolve(self):
-        # First, evaluate all parents in parallel using GUI mode.
-        self.Evaluate(self.parents, "DIRECT")  # NEW:
-        # Now evolve for a number of generations.
-        for gen in range(numberOfGenerations):  # NEW:
-            self.Spawn()           # NEW:
-            self.Mutate()          # NEW:
-            self.Evaluate(self.children, "DIRECT")  # NEW: Evaluate children in DIRECT mode (fast)
-            self.Print()           # NEW: Print fitness of parents and children together
-            self.Select()          # NEW: Compete children against parents
-        # Finally, re-run the best parent's simulation in GUI mode.
-        self.Show_Best()  # NEW:
-    
+        # Evaluate initial parents
+        print("\n--- Evaluating Initial Parents ---")
+        self.Evaluate(self.parents, "DIRECT")
+
+        for gen in range(numberOfGenerations):
+            print(f"\n======= Generation {gen+1}/{numberOfGenerations} =======")
+            self.Spawn()
+            self.Mutate()
+            print(f"\n--- Evaluating Children (Generation {gen+1}) ---")
+            self.Evaluate(self.children, "DIRECT") # Evaluate children
+            self.Print(gen) # Print combined fitness info
+            self.Select() # Select based on the evaluated fitness
+            print(f"======= End of Generation {gen+1} =======")
+
+        # Clean up generated body/world files at the end
+        os.system("rm body.urdf 2> /dev/null")
+        os.system("rm world*.sdf 2> /dev/null")
+
+
     def Spawn(self):
-        self.children = {}  # NEW: Create an empty dictionary for children
-        for key in self.parents:  # NEW:
-            # Create a deep copy of each parent.
+        print("\n--- Spawning Children ---")
+        self.children = {}
+        for key in self.parents:
             child = copy.deepcopy(self.parents[key])
-            # Assign a new unique ID to this child.
-            child.Set_ID(self.nextAvailableID)  # NEW:
-            self.children[key] = child  # NEW: Use the same key for correspondence.
-            self.nextAvailableID += 1  # NEW:
-        # (Optional: For debugging, print self.children and exit() here)
-        # for key in self.children:
-        #     print("Child", key, ":", self.children[key])
-        # exit()  # NEW: Remove after verifying.
-    
+            child.Set_ID(self.nextAvailableID)
+            self.children[key] = child # Store child with the same key as its parent
+            self.nextAvailableID += 1
+        print(f"Spawned {len(self.children)} children.")
+
+
     def Mutate(self):
-        # Iterate through each child and mutate it.
+        print("\n--- Mutating Children ---")
         for key in self.children:
-            self.children[key].Mutate()  # NEW:
-    
+            self.children[key].Mutate()
+        print("Finished mutating children.")
+
+
+    # This method now calls the solution's own Evaluate method
     def Evaluate(self, solutions, mode):
-        # Start all simulations in parallel.
         for key in solutions:
-            solutions[key].Start_Simulation(mode)  # NEW:
-        # Then, wait for all fitness files to appear and read fitness values.
-        for key in solutions:
-            solutions[key].Wait_For_Simulation_To_End()  # NEW:
-    
-    def Print(self):
-        print("")  # NEW: Print an empty line at the start
+             # Solution's Evaluate handles both worlds A & B and averages fitness
+             solutions[key].Evaluate(mode)
+
+        # Optional: Add a small delay here if simulations seem to overlap/interfere
+        # time.sleep(1) # e.g., wait 1 second after launching all evaluations
+
+
+    def Print(self, generation):
+        print(f"\n--- Generation {generation+1} Results ---")
+        print("ID | Parent Fitness | Child Fitness  | Better")
+        print("---|----------------|----------------|--------")
         for key in self.parents:
-            parentFitness = self.parents[key].fitness
-            # For the corresponding child (if present), get its fitness.
-            childFitness = self.children[key].fitness if key in self.children else None
-            print("Index", key, "| Parent fitness:", parentFitness, "| Child fitness:", childFitness)  # NEW:
-        print("")  # NEW: Empty line at the end
-    
+            parent_fitness = self.parents[key].fitness
+            # Check if child exists for this key (should always in this setup)
+            child_fitness = self.children[key].fitness if key in self.children else float('inf')
+
+            better = "Child" if child_fitness < parent_fitness else "Parent"
+            if child_fitness == parent_fitness:
+                better = "Equal"
+
+            print(f"{key:2d} | {parent_fitness:14.4f} | {child_fitness:14.4f} | {better}")
+        print("-" * 50)
+
+
     def Select(self):
-        # For each key, if the child's fitness is lower (better) than its parent's, replace the parent.
-        for key in self.children:
-            if self.children[key].fitness < self.parents[key].fitness:
-                self.parents[key] = self.children[key]  # NEW:
-    
-    def Show_Best(self):
-        # Find the parent with the lowest fitness.
-        bestKey = None
-        bestFitness = None
+        print("\n--- Performing Selection ---")
+        replaced_count = 0
         for key in self.parents:
-            fitness = self.parents[key].fitness
-            if bestFitness is None or fitness < bestFitness:
-                bestFitness = fitness
+            # Check if the child exists and has better (lower) fitness
+            if key in self.children and self.children[key].fitness < self.parents[key].fitness:
+                self.parents[key] = self.children[key]
+                replaced_count += 1
+        print(f"Selected {replaced_count} children to replace parents.")
+
+
+    def Show_Best(self):
+        print("\n--- Determining Best Solution ---")
+        bestFitness = float('inf')
+        bestKey = -1
+        for key in self.parents:
+            if self.parents[key].fitness < bestFitness:
+                bestFitness = self.parents[key].fitness
                 bestKey = key
-        print("Best solution is at index", bestKey, "with fitness", bestFitness)  # NEW:
-        # Re-run the best solution with graphics.
-        self.parents[bestKey].Start_Simulation("GUI")  # NEW:
+
+        if bestKey != -1:
+             print(f"Best solution found: ID {bestKey} with Average Fitness: {bestFitness:.4f}")
+             print(f"--- Running Best Solution (ID {bestKey}) in GUI Mode (World A) ---")
+             best_solution = self.parents[bestKey]
+             # We need to regenerate files for the best solution before simulating
+             best_solution.Generate_World() # Create worldA.sdf and worldB.sdf
+             best_solution.Create_Body()    # Create body.urdf
+             best_solution.Create_Brain()   # Create brain<ID>.nndf
+             # Start simulation in GUI mode for world A ONLY
+             best_solution.Start_Single_Simulation("GUI", 'A')
+             # We don't wait here - just let it run visually.
+             # Add a prompt to keep the script alive while watching
+             input("Press Enter to quit after viewing the simulation...")
+        else:
+             print("Could not determine the best solution (perhaps all fitnesses were infinite).")
