@@ -46,13 +46,20 @@ class ROBOT:
         self.nn.Update()
 
     def Get_Fitness(self):
+        # Get the robot's base position from pybullet
         basePositionAndOrientation = p.getBasePositionAndOrientation(self.robotID)
         basePosition = basePositionAndOrientation[0]
-        xPosition = basePosition[0]
-        # Write fitness into a temporary file then move it to a unique fitness file.
+        # Define the fixed position of the box (same as in Create_World)
+        boxPosition = [6,-3, 0.5]  # x, y, z of the box
+        # Compute Euclidean distance in the horizontal (x,y) plane:
+        dx = basePosition[0] - boxPosition[0]
+        dy = basePosition[1] - boxPosition[1]
+        distance = (dx*dx + dy*dy)**0.5
+        
+        # Write the fitness (i.e. distance) into a temporary file then move it to a unique fitness file.
         tmpFile = "tmp" + str(self.solutionID) + ".txt"  # NEW:
         fitnessFile = "fitness" + str(self.solutionID) + ".txt"  # NEW:
         with open(tmpFile, "w") as f:
-            f.write(str(xPosition))
+            f.write(str(distance))
         os.system("mv " + tmpFile + " " + fitnessFile)  # NEW:
-        return xPosition
+        return distance
