@@ -6,6 +6,7 @@ from motor import MOTOR
 from pyrosim.neuralNetwork import NEURAL_NETWORK
 import os
 import constants as c
+import numpy as np
 
 class ROBOT:
     def __init__(self, solutionID):  # NEW: Accept solutionID
@@ -45,21 +46,37 @@ class ROBOT:
     def Think(self):
         self.nn.Update()
 
-    def Get_Fitness(self):
-        # Get the robot's base position from pybullet
-        basePositionAndOrientation = p.getBasePositionAndOrientation(self.robotID)
-        basePosition = basePositionAndOrientation[0]
-        # Define the fixed position of the box (same as in Create_World)
-        boxPosition = [6,-3, 0.5]  # x, y, z of the box
-        # Compute Euclidean distance in the horizontal (x,y) plane:
-        dx = basePosition[0] - boxPosition[0]
-        dy = basePosition[1] - boxPosition[1]
-        distance = (dx*dx + dy*dy)**0.5
-        
-        # Write the fitness (i.e. distance) into a temporary file then move it to a unique fitness file.
-        tmpFile = "tmp" + str(self.solutionID) + ".txt"  # NEW:
-        fitnessFile = "fitness" + str(self.solutionID) + ".txt"  # NEW:
-        with open(tmpFile, "w") as f:
-            f.write(str(distance))
-        os.system("mv " + tmpFile + " " + fitnessFile)  # NEW:
-        return distance
+    def Get_Fitness(self, boxID):
+        if self.robotID is None:
+             fitness = 9999.0
+        else:
+             try:
+                # Get the robot's position
+                basePositionAndOrientation = p.getBasePositionAndOrientation(self.robotID)
+                basePosition = np.array(basePositionAndOrientation[0])
+
+                # Get the box's position
+                boxPositionAndOrientation = p.getBasePositionAndOrientation(boxID)
+                boxPosition = np.array(boxPositionAndOrientation[0])
+
+                # Compute Euclidean distance
+                distance = np.linalg.norm(basePosition[0:2] - boxPosition[0:2])
+                fitness = -distance
+
+             except p.error as e:
+                 print(f"PyBullet error getting positions for fitness calculation (Sol: {self.solutionID}): {e}")
+                 fitness = 9999.0 # Assign high fitness on error
+
+
+        # Write the fitness (i.e. distance) into a temporary file then move it
+        tmpFile = "tmp" + str(self.solutionID) + ".txt"
+        fitnessFile = "fitness" + str(self.solutionID) + ".txt"
+        try:
+            with open(tmpFile, "w") as f:
+                f.write(str(fitness))
+            # Use f-string for clarity and ensure command works on different OS if needed
+            # Note: 'mv' is Linux/macOS, 'move' is Windows. Sticking with 'mv' based on your env.
+            os.system(f"mv {tmpFile} {fitnessFile}")
+        except Exception as e:
+            print(f"Error writing or moving fitness file for solution {self.solutionID}: {e}")
+            # If writing fails, the Wait_For_Simulation_To_End might hang or fail.

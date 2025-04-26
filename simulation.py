@@ -30,7 +30,11 @@ class SIMULATION:
                 time.sleep(c.SLEEPTIME)
 
     def Get_Fitness(self):
-        return self.robot.Get_Fitness()
+        if self.world.boxID is not None:
+             # Pass the actual boxID obtained from the world object
+             self.robot.Get_Fitness(self.world.boxID)
+        else:
+            print(f"Error: Cannot calculate fitness for solution {self.solutionID} due to missing box.")
 
     def __del__(self):
         p.disconnect()
